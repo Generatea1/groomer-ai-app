@@ -1,36 +1,35 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Setup
-st.set_page_config(page_title="GroomerAI Suite", page_icon="🐾")
-st.title("🐾 GroomerAI: Your Digital Assistant")
+st.set_page_config(page_title="GroomerAI Visual Suite", page_icon="🐾")
+st.title("🐾 GroomerAI: Visual Marketing Suite")
 
-# Sidebar for API Key
 api_key = st.sidebar.text_input("Enter your License Key", type="password")
 
 if api_key:
     try:
         genai.configure(api_key=api_key)
-        
-        # THE FIX: Updated to the 2.5 Flash-Lite model which is more accessible in EU
-        model = genai.GenerativeModel('gemini-2.5-flash-lite')
+        # Using the new Imagen model for image generation
+        image_model = genai.GenerativeModel('imagen-3.0-generate-preview')
+        text_model = genai.GenerativeModel('gemini-2.5-flash-lite')
 
-        st.subheader("What happened in the salon today?")
-        pet_info = st.text_area("Example: I groomed a Golden Retriever named Max. He was very muddy but now he's fluffy and smells like blueberries!")
+        pet_info = st.text_area("What did you do today?", placeholder="Groomed a Golden Retriever named Max...")
 
-        if st.button("Generate Marketing Bundle"):
-            if pet_info:
-                with st.spinner('Magic in progress...'):
-                    response = model.generate_content(
-                        f"Professional Pet Groomer Social Media Manager: Create a bundle for: {pet_info}"
-                    )
-                    st.success("Bundle Ready!")
-                    st.markdown(response.text)
-            else:
-                st.warning("Please enter some pet details first!")
+        if st.button("Generate Full Visual Bundle"):
+            with st.spinner('Generating professional assets...'):
+                # 1. Generate the Marketing Copy
+                text_response = text_model.generate_content(f"Create a 100-word Instagram post for: {pet_info}")
+                
+                # 2. Generate a Professional Marketing Image
+                image_prompt = f"A professional, high-quality studio photograph of a {pet_info}. The dog looks clean, fluffy, and happy in a luxury pet spa setting. Soft lighting, 8k resolution."
+                image_response = image_model.generate_images(prompt=image_prompt)
+                
+                # Display Results
+                st.image(image_response.images[0], caption="AI-Generated Marketing Image")
+                st.success("Your Marketing Post:")
+                st.write(text_response.text)
                 
     except Exception as e:
         st.error(f"Error: {e}")
-        st.info("COACH TIP: If you still see '404', go to Google AI Studio and search for 'gemini-2.5-flash-lite' in the model dropdown to ensure your key has access.")
 else:
-    st.info("Please enter your License Key in the sidebar to start.")
+    st.info("Enter your License Key to unlock Visual Generation.")
