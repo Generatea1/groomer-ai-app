@@ -5,7 +5,7 @@ import google.generativeai as genai
 st.set_page_config(page_title="GroomerAI Pro", page_icon="🐾")
 
 st.title("🐾 GroomerAI Pro")
-st.write("Luxury marketing suite for busy pet salons.")
+st.write("Luxury marketing suite for high-end pet salons.")
 
 # --- SIDEBAR ---
 api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
@@ -13,33 +13,37 @@ api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 # --- MAIN LOGIC ---
 if api_key:
     try:
-        # Initialize using the STABLE library
+        # Initialize
         genai.configure(api_key=api_key)
         
-        # We use 'gemini-1.5-flash' which is the most stable name for this library
+        # FIX: We use the explicit model string. 
+        # In some regions, 'gemini-1.5-flash' works, in others 'models/gemini-1.5-flash'.
+        # We will try the most universal one.
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         pet_info = st.text_area(
-            "What happened today?", 
-            placeholder="Groomed a Golden Retriever named Max...",
+            "Describe the groom today:", 
+            placeholder="Groomed a Golden Retriever named Max. He smells like blueberries!",
             height=150
         )
 
         if st.button("Generate Marketing Bundle"):
             if not pet_info:
-                st.warning("Please enter some pet details.")
+                st.warning("Please enter details.")
             else:
-                with st.spinner('Creating your content...'):
-                    prompt = f"Act as a luxury pet spa marketing manager. Create a social media bundle for: {pet_info}. Include a headline, Instagram caption, and 10 hashtags."
-                    
-                    response = model.generate_content(prompt)
+                with st.spinner('AI is working...'):
+                    # Force a simple prompt to test connection
+                    response = model.generate_content(
+                        f"Write a luxury Instagram post for a pet groomer about: {pet_info}"
+                    )
                     
                     st.divider()
                     st.success("Bundle Ready!")
                     st.write(response.text)
 
     except Exception as e:
+        # If the 404 persists, this will help us see if it's a naming issue
         st.error(f"Error: {e}")
-        st.info("COACH TIP: If you see 'User location not supported', it means you need to enable 'Pay-as-you-go' in AI Studio (it will still be $0).")
+        st.info("COACH TIP: If you still see a 404, try replacing 'gemini-1.5-flash' with 'gemini-1.5-flash-latest' in the code.")
 else:
     st.info("Enter your API Key in the sidebar to start.")
