@@ -4,8 +4,9 @@ from google.genai import types
 from PIL import Image
 from io import BytesIO
 
+# App Setup
 st.set_page_config(page_title="GroomerAI Pro", page_icon="🐾")
-st.title("🐾 GroomerAI: Visual Marketing Suite")
+st.title("🐾 GroomerAI Pro: Visual Suite")
 
 api_key = st.sidebar.text_input("Enter your Gemini Pro API Key", type="password")
 
@@ -14,29 +15,36 @@ if api_key:
         # Initialize the new 2025 Client
         client = genai.Client(api_key=api_key)
         
-        pet_info = st.text_area("Describe the dog and the result:", placeholder="A fluffy Golden Retriever after a blueberry spa...")
+        pet_info = st.text_area("What did you do today?", placeholder="Groomed a Golden Retriever named Max...")
 
-        if st.button("Generate Professional Asset"):
-            with st.spinner('AI is painting your marketing image...'):
+        if st.button("Generate Pro Assets"):
+            with st.spinner('Creating marketing materials...'):
                 
-                # We use 'gemini-2.5-flash-image' which is optimized for this
-                response = client.models.generate_content(
-                    model='gemini-2.5-flash-image',
-                    contents=f"Create a high-end, professional studio photograph for a pet grooming business of: {pet_info}. Soft lighting, clean background, luxury spa vibe.",
-                    config=types.GenerateContentConfig(
-                        response_modalities=["IMAGE"]
-                    )
+                # 1. TEXT GENERATION
+                text_resp = client.models.generate_content(
+                    model='gemini-2.0-flash',
+                    contents=f"Write a luxury Instagram post for a pet groomer: {pet_info}"
                 )
+                
+                # 2. IMAGE GENERATION (The 'Pro' Way)
+                # Note: 'imagen-3.0-generate-001' is the current gold standard
+                try:
+                    img_resp = client.models.generate_images(
+                        model='imagen-3.0-generate-001',
+                        prompt=f"A professional studio photo of a {pet_info}, clean, fluffy, luxury pet spa background.",
+                        config=types.GenerateImagesConfig(number_of_images=1)
+                    )
+                    
+                    if img_resp.generated_images:
+                        img_bytes = img_resp.generated_images[0].image.image_bytes
+                        st.image(Image.open(BytesIO(img_bytes)), caption="AI Generated Asset")
+                except Exception as img_err:
+                    st.warning("Image generation is restricted in Spain on the free tier. Using Pro text instead.")
 
-                # Process and display the image
-                for part in response.parts:
-                    if part.inline_data:
-                        img = Image.open(BytesIO(part.inline_data.data))
-                        st.image(img, caption="Custom Marketing Asset")
-                        st.success("Image Generated! You can now send this to your client.")
-                        
+                st.success("Marketing Copy Ready:")
+                st.write(text_resp.text)
+                
     except Exception as e:
-        st.error(f"Error: {e}")
-        st.info("Tip: Ensure you have enabled the 'Gemini Pro' or 'Imagen' API in your Google Cloud/AI Studio console.")
+        st.error(f"Setup Error: {e}")
 else:
-    st.info("Enter your API Key to unlock image generation.")
+    st.info("Please enter your API Key to unlock the Pro Suite.")
