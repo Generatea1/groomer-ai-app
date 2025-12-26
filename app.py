@@ -1,35 +1,47 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
+from PIL import Image
+from io import BytesIO
 
-st.set_page_config(page_title="GroomerAI Visual Suite", page_icon="🐾")
-st.title("🐾 GroomerAI: Visual Marketing Suite")
+# App Config
+st.set_page_config(page_title="GroomerAI Pro", page_icon="🐾")
+st.title("🐾 GroomerAI: Pro Visual Suite")
 
-api_key = st.sidebar.text_input("Enter your License Key", type="password")
+# Sidebar for API Key
+api_key = st.sidebar.text_input("Enter your Gemini Pro API Key", type="password")
 
 if api_key:
     try:
-        genai.configure(api_key=api_key)
-        # Using the new Imagen model for image generation
-        image_model = genai.GenerativeModel('imagen-3.0-generate-preview')
-        text_model = genai.GenerativeModel('gemini-2.5-flash-lite')
-
+        # NEW 2025 SDK INITIALIZATION
+        client = genai.Client(api_key=api_key)
+        
         pet_info = st.text_area("What did you do today?", placeholder="Groomed a Golden Retriever named Max...")
 
-        if st.button("Generate Full Visual Bundle"):
-            with st.spinner('Generating professional assets...'):
-                # 1. Generate the Marketing Copy
-                text_response = text_model.generate_content(f"Create a 100-word Instagram post for: {pet_info}")
+        if st.button("Generate Pro Marketing Bundle"):
+            with st.spinner('Generating high-end assets...'):
                 
-                # 2. Generate a Professional Marketing Image
-                image_prompt = f"A professional, high-quality studio photograph of a {pet_info}. The dog looks clean, fluffy, and happy in a luxury pet spa setting. Soft lighting, 8k resolution."
-                image_response = image_model.generate_images(prompt=image_prompt)
+                # 1. GENERATE TEXT (Using Gemini 2.5 Flash)
+                text_response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=f"Create a 100-word Instagram post for: {pet_info}"
+                )
                 
+                # 2. GENERATE IMAGE (Using Imagen 3.0)
+                image_prompt = f"Professional high-end pet spa photography of a {pet_info}. Fluffy, clean, studio lighting, 8k."
+                image_response = client.models.generate_images(
+                    model='imagen-3.0-generate-001', # The elite image model
+                    prompt=image_prompt
+                )
+
                 # Display Results
-                st.image(image_response.images[0], caption="AI-Generated Marketing Image")
+                if image_response.generated_images:
+                    img_data = image_response.generated_images[0].image.image_bytes
+                    st.image(Image.open(BytesIO(img_data)), caption="AI-Generated Marketing Asset")
+                
                 st.success("Your Marketing Post:")
                 st.write(text_response.text)
                 
     except Exception as e:
         st.error(f"Error: {e}")
 else:
-    st.info("Enter your License Key to unlock Visual Generation.")
+    st.info("Please enter your Pro API Key to start generating images.")
