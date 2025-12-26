@@ -4,47 +4,39 @@ from google.genai import types
 from PIL import Image
 from io import BytesIO
 
-# App Setup
-st.set_page_config(page_title="GroomerAI Pro", page_icon="🐾")
-st.title("🐾 GroomerAI Pro: Visual Suite")
+st.set_page_config(page_title="GroomerAI Pro Suite", page_icon="🐾")
+st.title("🐾 GroomerAI: Visual Marketing Suite")
 
-api_key = st.sidebar.text_input("Enter your Gemini Pro API Key", type="password")
+api_key = st.sidebar.text_input("Enter your API Key", type="password")
 
 if api_key:
     try:
-        # Initialize the new 2025 Client
         client = genai.Client(api_key=api_key)
         
-        pet_info = st.text_area("What did you do today?", placeholder="Groomed a Golden Retriever named Max...")
+        pet_info = st.text_area("What happened in the salon?", placeholder="A Golden Retriever named Max...")
 
-        if st.button("Generate Pro Assets"):
-            with st.spinner('Creating marketing materials...'):
+        if st.button("Generate Professional Assets"):
+            with st.spinner('AI is generating your marketing suite...'):
                 
-                # 1. TEXT GENERATION
-                text_resp = client.models.generate_content(
-                    model='gemini-2.0-flash',
-                    contents=f"Write a luxury Instagram post for a pet groomer: {pet_info}"
-                )
-                
-                # 2. IMAGE GENERATION (The 'Pro' Way)
-                # Note: 'imagen-3.0-generate-001' is the current gold standard
-                try:
-                    img_resp = client.models.generate_images(
-                        model='imagen-3.0-generate-001',
-                        prompt=f"A professional studio photo of a {pet_info}, clean, fluffy, luxury pet spa background.",
-                        config=types.GenerateImagesConfig(number_of_images=1)
+                # THE BYPASS: Using the latest model and specific modality request
+                response = client.models.generate_content(
+                    model='gemini-2.0-flash', 
+                    contents=f"Generate a professional, high-end studio photograph of a {pet_info} in a luxury pet spa. Include a 100-word Instagram caption below the image.",
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE", "TEXT"]
                     )
-                    
-                    if img_resp.generated_images:
-                        img_bytes = img_resp.generated_images[0].image.image_bytes
-                        st.image(Image.open(BytesIO(img_bytes)), caption="AI Generated Asset")
-                except Exception as img_err:
-                    st.warning("Image generation is restricted in Spain on the free tier. Using Pro text instead.")
+                )
 
-                st.success("Marketing Copy Ready:")
-                st.write(text_resp.text)
-                
+                # Display Logic
+                for part in response.candidates[0].content.parts:
+                    if part.inline_data:
+                        img = Image.open(BytesIO(part.inline_data.data))
+                        st.image(img, caption="AI-Generated Pro Asset")
+                    if part.text:
+                        st.success("Marketing Copy Ready:")
+                        st.write(part.text)
+                        
     except Exception as e:
         st.error(f"Setup Error: {e}")
 else:
-    st.info("Please enter your API Key to unlock the Pro Suite.")
+    st.info("Please enter your API Key to start.")
