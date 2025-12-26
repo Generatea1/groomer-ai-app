@@ -1,47 +1,42 @@
 import streamlit as st
 from google import genai
+from google.genai import types
 from PIL import Image
 from io import BytesIO
 
-# App Config
 st.set_page_config(page_title="GroomerAI Pro", page_icon="🐾")
-st.title("🐾 GroomerAI: Pro Visual Suite")
+st.title("🐾 GroomerAI: Visual Marketing Suite")
 
-# Sidebar for API Key
 api_key = st.sidebar.text_input("Enter your Gemini Pro API Key", type="password")
 
 if api_key:
     try:
-        # NEW 2025 SDK INITIALIZATION
+        # Initialize the new 2025 Client
         client = genai.Client(api_key=api_key)
         
-        pet_info = st.text_area("What did you do today?", placeholder="Groomed a Golden Retriever named Max...")
+        pet_info = st.text_area("Describe the dog and the result:", placeholder="A fluffy Golden Retriever after a blueberry spa...")
 
-        if st.button("Generate Pro Marketing Bundle"):
-            with st.spinner('Generating high-end assets...'):
+        if st.button("Generate Professional Asset"):
+            with st.spinner('AI is painting your marketing image...'):
                 
-                # 1. GENERATE TEXT (Using Gemini 2.5 Flash)
-                text_response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=f"Create a 100-word Instagram post for: {pet_info}"
-                )
-                
-                # 2. GENERATE IMAGE (Using Imagen 3.0)
-                image_prompt = f"Professional high-end pet spa photography of a {pet_info}. Fluffy, clean, studio lighting, 8k."
-                image_response = client.models.generate_images(
-                    model='imagen-3.0-generate-001', # The elite image model
-                    prompt=image_prompt
+                # We use 'gemini-2.5-flash-image' which is optimized for this
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash-image',
+                    contents=f"Create a high-end, professional studio photograph for a pet grooming business of: {pet_info}. Soft lighting, clean background, luxury spa vibe.",
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE"]
+                    )
                 )
 
-                # Display Results
-                if image_response.generated_images:
-                    img_data = image_response.generated_images[0].image.image_bytes
-                    st.image(Image.open(BytesIO(img_data)), caption="AI-Generated Marketing Asset")
-                
-                st.success("Your Marketing Post:")
-                st.write(text_response.text)
-                
+                # Process and display the image
+                for part in response.parts:
+                    if part.inline_data:
+                        img = Image.open(BytesIO(part.inline_data.data))
+                        st.image(img, caption="Custom Marketing Asset")
+                        st.success("Image Generated! You can now send this to your client.")
+                        
     except Exception as e:
         st.error(f"Error: {e}")
+        st.info("Tip: Ensure you have enabled the 'Gemini Pro' or 'Imagen' API in your Google Cloud/AI Studio console.")
 else:
-    st.info("Please enter your Pro API Key to start generating images.")
+    st.info("Enter your API Key to unlock image generation.")
