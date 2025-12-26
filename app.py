@@ -2,21 +2,18 @@ import streamlit as st
 from google import genai
 
 # --- PAGE CONFIGURATION ---
-st.set_page_config(
-    page_title="GroomerAI Pro", 
-    page_icon="🐾"
-)
+st.set_page_config(page_title="GroomerAI Pro", page_icon="🐾")
 
-# --- CLEAN UI ---
 st.title("🐾 GroomerAI Pro")
-st.write("Luxury marketing for busy pet salons.")
+st.write("Luxury marketing suite for busy pet salons.")
 
 # --- SIDEBAR ---
-api_key = st.sidebar.text_input("Enter Gemini License Key", type="password")
+api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
 # --- MAIN LOGIC ---
 if api_key:
     try:
+        # Initialize the Client
         client = genai.Client(api_key=api_key)
         
         pet_info = st.text_area(
@@ -30,19 +27,11 @@ if api_key:
                 st.warning("Please enter some pet details.")
             else:
                 with st.spinner('Creating your content...'):
-                    prompt = f"""
-                    Act as a high-end luxury marketing manager for a pet spa. 
-                    Based on: {pet_info}
-                    Provide:
-                    1. THE GOLDEN HOOK
-                    2. LUXURY INSTAGRAM CAPTION
-                    3. VISUAL PROMPT FOR AI IMAGES
-                    4. 10 HASHTAGS
-                    """
-                    
+                    # The Fix: Use just 'gemini-1.5-flash' without prefixes
+                    # The SDK handles the API versioning automatically
                     response = client.models.generate_content(
                         model='gemini-1.5-flash',
-                        contents=prompt
+                        contents=f"Act as a luxury pet spa marketing manager. Create a social media bundle for: {pet_info}. Include a headline, Instagram caption, and 10 hashtags."
                     )
                     
                     st.divider()
@@ -50,6 +39,8 @@ if api_key:
                     st.write(response.text)
 
     except Exception as e:
+        # This will catch if the model name is still a problem
         st.error(f"Error: {e}")
+        st.info("If you see a 404, try changing the model name to 'gemini-1.5-flash-latest' in the code.")
 else:
     st.info("Enter your API Key in the sidebar to start.")
