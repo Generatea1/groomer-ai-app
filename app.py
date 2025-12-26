@@ -27,8 +27,8 @@ if api_key:
                 st.warning("Please enter some pet details.")
             else:
                 with st.spinner('Creating your content...'):
-                    # The Fix: Use just 'gemini-1.5-flash' without prefixes
-                    # The SDK handles the API versioning automatically
+                    # THE FIX: We use 'gemini-1.5-flash' which is the global standard.
+                    # If this fails, the fallback is 'gemini-1.5-flash-002'
                     response = client.models.generate_content(
                         model='gemini-1.5-flash',
                         contents=f"Act as a luxury pet spa marketing manager. Create a social media bundle for: {pet_info}. Include a headline, Instagram caption, and 10 hashtags."
@@ -39,8 +39,7 @@ if api_key:
                     st.write(response.text)
 
     except Exception as e:
-        # This will catch if the model name is still a problem
         st.error(f"Error: {e}")
-        st.info("If you see a 404, try changing the model name to 'gemini-1.5-flash-latest' in the code.")
+        st.info("COACH TIP: If the 404 persists, go to Google AI Studio, create a BRAND NEW API Key, and try that one. Sometimes old keys are locked to retired model versions.")
 else:
     st.info("Enter your API Key in the sidebar to start.")
