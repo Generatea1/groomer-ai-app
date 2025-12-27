@@ -27,7 +27,7 @@ if api_key:
                 try:
                     prompt = f"1. Write a luxury IG caption for {shop_name}. 2. Generate a 4K luxury spa image of this dog with a sign saying '{shop_name}'."
 
-                    # Using the stable 2025 Model ID
+                    # Using the stable 2025 Model ID (Gemini 3 Pro)
                     response = client.models.generate_content(
                         model="gemini-3-pro-image-preview", 
                         contents=[prompt, img_pil],
@@ -42,14 +42,17 @@ if api_key:
                             if part.text:
                                 st.markdown(part.text)
                             if part.inline_data:
-                                # FIXED: We extract the image and force-save it as PNG
+                                # FIXED: Extract the raw image bytes and convert
                                 generated_img = part.as_image()
-                                st.image(generated_img, caption="✨ 4K Luxury Asset", use_container_width=True)
                                 
                                 # This block fixes the 'no attribute format' error
+                                # We force the image into a buffer and specify PNG
                                 buf = io.BytesIO()
-                                generated_img.save(buf, format="PNG") # Explicitly set format
+                                generated_img.save(buf, format="PNG") 
                                 byte_im = buf.getvalue()
+                                
+                                # Display the image
+                                st.image(byte_im, caption="✨ 4K Luxury Asset", use_container_width=True)
                                 
                                 st.download_button(
                                     label="📥 Download 4K Asset",
