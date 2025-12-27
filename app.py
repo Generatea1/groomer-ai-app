@@ -10,6 +10,7 @@ st.title("🐾 GroomerAI: 4K Content Studio")
 api_key = st.sidebar.text_input("Enter License Key", type="password")
 
 if api_key:
+    # Initialize with the standard v1 API for maximum compatibility
     client = genai.Client(api_key=api_key)
     
     col1, col2 = st.columns([1, 1])
@@ -25,39 +26,40 @@ if api_key:
             
             with st.spinner('🎨 Nano Banana is rendering your 4K Assets...'):
                 try:
-                    # We use a highly descriptive prompt to trigger the image engine
+                    # Using a simpler, highly direct prompt to ensure image triggering
                     prompt = f"""
-                    TASK: Create a professional marketing bundle for '{shop_name}'.
-                    1. TEXT: Write a short viral Instagram caption and a Google review reply.
-                    2. IMAGE: Use the Nano Banana engine to generate a high-fidelity 4K image. 
-                       The image must show the dog from the original photo sitting inside 
-                       a cinematic, ultra-luxury pet spa. Background: Marble walls, 
-                       soft gold lighting, and a clear sign that says '{shop_name}'.
+                    Generate a marketing bundle for {shop_name}.
+                    1. Write a professional Instagram caption and Google review reply.
+                    2. Generate a high-quality 4K photo showing this dog in a 
+                       luxury pet spa with a sign that says '{shop_name}'.
                     """
 
-                    # IMPORTANT: Use gemini-2.0-pro-exp for maximum image quality
+                    # Switching to the more stable 2.0 Flash model
                     response = client.models.generate_content(
-                        model="gemini-2.0-pro-exp", 
+                        model="gemini-2.0-flash", 
                         contents=[prompt, img_pil],
                         config=types.GenerateContentConfig(
-                            response_modalities=["TEXT", "IMAGE"] # Forces image output
+                            response_modalities=["TEXT", "IMAGE"]
                         )
                     )
 
                     with col2:
                         st.subheader("2. Your Results")
                         
-                        # Loop through the interleaved parts (Text AND Image)
+                        # New: Check if we got any parts back at all
+                        if not response.parts:
+                            st.warning("The AI processed the request but didn't return media. Trying a text-only fallback.")
+                        
                         for part in response.parts:
                             if part.text:
                                 st.markdown(part.text)
                             
-                            # This part catches the actual 4K image data
+                            # This is the "Media Catch" for Nano Banana
                             if part.inline_data:
                                 generated_img = part.as_image()
                                 st.image(generated_img, caption="✨ 4K Luxury Asset", use_container_width=True)
                                 
-                                # Add Download Button
+                                # Download Logic
                                 buf = io.BytesIO()
                                 generated_img.save(buf, format="PNG")
                                 st.download_button(
@@ -67,11 +69,11 @@ if api_key:
                                     mime="image/png"
                                 )
                                 
-                    st.success("Media Bundle Successfully Created!")
+                    st.success("Bundle Created!")
 
                 except Exception as e:
                     st.error(f"Media Error: {e}")
-                    st.info("Ensure the 'Nano Banana' model is enabled in your AI Studio API settings.")
+                    st.info("Try refreshing your API key in AI Studio if the error persists.")
         else:
             st.warning("Please upload a photo first.")
 else:
