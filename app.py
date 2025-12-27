@@ -4,15 +4,14 @@ from google.genai import types
 from PIL import Image
 import io
 
-# App Layout
-st.set_page_config(page_title="GroomerAI Studio Pro", page_icon="🐾", layout="wide")
+st.set_page_config(page_title="GroomerAI Pro", page_icon="🐾", layout="wide")
 st.title("🐾 GroomerAI: 4K Content Studio")
 
-# Sidebar for API Authentication
 api_key = st.sidebar.text_input("Enter License Key", type="password")
 
 if api_key:
     client = genai.Client(api_key=api_key)
+    
     col1, col2 = st.columns([1, 1])
 
     with col1:
@@ -23,11 +22,11 @@ if api_key:
     if st.button("🚀 Generate 4K Brand Bundle"):
         if uploaded_file:
             img_pil = Image.open(uploaded_file)
-            with st.spinner('🎨 Nano Banana Pro is rendering...'):
+            
+            with st.spinner('🎨 Nano Banana is rendering (this takes ~30 seconds)...'):
                 try:
                     prompt = f"1. Write a luxury IG caption for {shop_name}. 2. Generate a 4K luxury spa image of this dog with a sign saying '{shop_name}'."
 
-                    # Using the stable 2025 Model ID (Gemini 3 Pro)
                     response = client.models.generate_content(
                         model="gemini-3-pro-image-preview", 
                         contents=[prompt, img_pil],
@@ -41,30 +40,33 @@ if api_key:
                         for part in response.parts:
                             if part.text:
                                 st.markdown(part.text)
+                            
                             if part.inline_data:
-                                # FIXED: Extract the raw image bytes and convert
-                                generated_img = part.as_image()
+                                # FIX: Convert the raw AI image into a standard PIL object
+                                raw_img = part.as_image()
                                 
-                                # This block fixes the 'no attribute format' error
-                                # We force the image into a buffer and specify PNG
+                                # FIX: Manually convert to bytes to bypass the 'format' attribute error
                                 buf = io.BytesIO()
-                                generated_img.save(buf, format="PNG") 
+                                raw_img.save(buf, format="PNG") # We force it to be PNG
                                 byte_im = buf.getvalue()
                                 
-                                # Display the image
+                                # Display using the byte data (much more stable)
                                 st.image(byte_im, caption="✨ 4K Luxury Asset", use_container_width=True)
                                 
+                                # Add the Download Button
                                 st.download_button(
                                     label="📥 Download 4K Asset",
                                     data=byte_im,
                                     file_name=f"{shop_name}_4K.png",
                                     mime="image/png"
                                 )
+                                
                     st.success("Bundle Created!")
+
                 except Exception as e:
-                    st.error(f"Media Error: {e}")
-                    st.info("Ensure Billing is enabled in Google Cloud.")
+                    st.error(f"Error: {e}")
+                    st.info("If you see 404, check your Google Cloud Billing and Region.")
         else:
-            st.warning("Please upload a photo.")
+            st.warning("Please upload a photo first.")
 else:
     st.info("Enter your API key in the sidebar.")
