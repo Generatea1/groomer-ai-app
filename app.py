@@ -1,54 +1,47 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="GroomerAI Pro", page_icon="🐾")
+st.set_page_config(page_title="GroomerAI Studio", page_icon="✂️", layout="wide")
+st.title("✂️ GroomerAI: 4K Brand Transformation")
 
-st.title("🐾 GroomerAI Pro")
-st.write("Professional Marketing Suite for Pet Salons.")
+# User enters their own API Key or you hardcode yours for the demo
+api_key = st.sidebar.text_input("Enter License Key", type="password")
 
-# --- SIDEBAR ---
-api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
-
-# --- MAIN LOGIC ---
 if api_key:
-    try:
-        # Step 1: Configure
-        genai.configure(api_key=api_key)
-        
-        # Step 2: Initialize Model 
-        # Using the standard production name
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        pet_info = st.text_area(
-            "What happened in the salon?", 
-            placeholder="Groomed a Golden Retriever named Max...",
-            height=150
-        )
+    client = genai.Client(api_key=api_key)
 
-        if st.button("Generate Marketing Bundle"):
-            if not pet_info:
-                st.warning("Please enter some details.")
-            else:
-                with st.spinner('AI is generating your content...'):
-                    # Step 3: Explicit call to the model
-                    response = model.generate_content(
-                        contents=f"Act as a luxury pet groomer's marketing assistant. Create a professional Instagram caption and 10 hashtags for: {pet_info}",
-                        # Adding safety and configuration to bypass 'v1beta' issues
-                        generation_config=genai.types.GenerationConfig(
-                            candidate_count=1,
-                            max_output_tokens=500,
-                            temperature=0.7,
-                        )
-                    )
-                    
-                    st.divider()
-                    st.success("✅ Content Ready!")
-                    st.write(response.text)
+    col1, col2 = st.columns(2)
 
-    except Exception as e:
-        # This will tell us if it's a regional block or a name block
-        st.error(f"Error: {e}")
-        st.info("COACH TIP: If the 404 persists, change the model line to: model = genai.GenerativeModel('gemini-1.5-flash-latest')")
+    with col1:
+        st.subheader("1. Source Content")
+        ig_url = st.text_input("Paste Instagram Image URL here")
+        # In a real app, you'd use a scraper, but for the demo, they can upload the photo
+        uploaded_file = st.file_uploader("Or Upload the Grooming Photo", type=['jpg', 'png'])
+
+    if st.button("Generate Luxury 4K Bundle"):
+        if uploaded_file:
+            with st.spinner('Generating 4K Luxury Portrait...'):
+                # IMAGE GENERATION (Nano Banana)
+                img_response = client.models.generate_content(
+                    model="gemini-2.5-flash-image",
+                    contents=["Transform this dog into a 4K luxury cinematic portrait in a marble salon, soft gold lighting, professional photography style.", uploaded_file]
+                )
+                # Display Image
+                for part in img_response.parts:
+                    if part.inline_data:
+                        st.image(part.as_image(), caption="New 4K Luxury Asset")
+
+            with st.spinner('Creating Veo Video Ad...'):
+                # VIDEO GENERATION (Veo)
+                video_op = client.models.generate_videos(
+                    model="veo-3.1-fast-generate-preview",
+                    prompt="A cinematic slow-motion pan of the dog in a luxury salon. Soft lighting, high-end commercial feel.",
+                    config=types.GenerateVideosConfig(number_of_videos=1)
+                )
+                st.info("Video is processing... (This takes 1-2 minutes)")
+                # (In production, you would poll the operation status here)
+        else:
+            st.error("Please provide an image first!")
 else:
-    st.info("Enter your API Key in the sidebar to start.")
+    st.info("Enter your key to unlock Nano Banana & Veo features.")
