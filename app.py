@@ -1,3 +1,4 @@
+
 import streamlit as st
 from google import genai
 from google.genai import types
@@ -23,7 +24,7 @@ if api_key:
         if uploaded_file:
             img_pil = Image.open(uploaded_file)
             
-            with st.spinner('🎨 Nano Banana is rendering (this takes ~30 seconds)...'):
+            with st.spinner('🎨 Nano Banana Pro is rendering (approx. 30-40 seconds)...'):
                 try:
                     prompt = f"1. Write a luxury IG caption for {shop_name}. 2. Generate a 4K luxury spa image of this dog with a sign saying '{shop_name}'."
 
@@ -42,15 +43,16 @@ if api_key:
                                 st.markdown(part.text)
                             
                             if part.inline_data:
-                                # FIX: Convert the raw AI image into a standard PIL object
+                                # SUCCESS: We found the image data!
                                 raw_img = part.as_image()
                                 
-                                # FIX: Manually convert to bytes to bypass the 'format' attribute error
+                                # FIX: Manually save to a byte buffer to bypass the 'format' error
                                 buf = io.BytesIO()
-                                raw_img.save(buf, format="PNG") # We force it to be PNG
+                                # We explicitly tell PIL to save this as a PNG
+                                raw_img.save(buf, format="PNG") 
                                 byte_im = buf.getvalue()
                                 
-                                # Display using the byte data (much more stable)
+                                # Display using the stable byte data
                                 st.image(byte_im, caption="✨ 4K Luxury Asset", use_container_width=True)
                                 
                                 # Add the Download Button
@@ -65,7 +67,7 @@ if api_key:
 
                 except Exception as e:
                     st.error(f"Error: {e}")
-                    st.info("If you see 404, check your Google Cloud Billing and Region.")
+                    st.info("Check your Google Cloud Billing if you see 404/NOT_FOUND.")
         else:
             st.warning("Please upload a photo first.")
 else:
